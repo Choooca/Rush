@@ -3,15 +3,20 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Arrow
+  - Convoyeur
+  - Turn
+  - Stop
+  - Teleporters
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Plate
   - Water
   - UI
-  - 
+  - Ground
   - 
   - 
   - 

@@ -307,6 +307,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9298d7a728e49c44381a85d897841542, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _PlateLayer:
+    serializedVersion: 2
+    m_Bits: 8
   _TickDuration: 0.5
 --- !u!33 &7184900242571817572
 MeshFilter:
