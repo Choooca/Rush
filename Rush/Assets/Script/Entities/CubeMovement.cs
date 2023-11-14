@@ -50,7 +50,10 @@ public class CubeMovement : MonoBehaviour
     {
         Ray lRay = new Ray(transform.position, _Direction);
 
-        if (Physics.Raycast(lRay, 1f))
+
+        if (Physics.Raycast(lRay, 1f)) SetModeHitWall();
+
+        while (Physics.Raycast(transform.position, _Direction, 1f))
         {
             _Direction = Quaternion.AngleAxis(90, Vector3.up) * _Direction;
             SetModeHitWall();
