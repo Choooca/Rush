@@ -7,17 +7,11 @@ public class OrbitalCamera : MonoBehaviour
 
     [SerializeField] private Transform _PointToLook;
     [SerializeField] private float verticalAngle;
-    [SerializeField] private float horizontalAngle;
+    [SerializeField] public float horizontalAngle { get; private set; }
     [SerializeField] private float Distance;
 
-    private float moveSpeed = .3f;
+    private float moveSpeed = 5f;
 
-    // Start is called before the first frame update
-    void Start()
-    {
-    }       
-
-    // Update is called once per frame
     void Update()
     {
         float x = Distance * Mathf.Cos(Mathf.Deg2Rad * verticalAngle) * Mathf.Cos(Mathf.Deg2Rad * horizontalAngle);
@@ -28,5 +22,6 @@ public class OrbitalCamera : MonoBehaviour
 
         horizontalAngle += moveSpeed * Input.GetAxis("Horizontal");
         verticalAngle += moveSpeed * Input.GetAxis("Vertical");
+        verticalAngle = Mathf.Clamp(verticalAngle, -45, 45);
     }
 }

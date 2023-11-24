@@ -1,9 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.PackageManager;
 using UnityEngine;
-using UnityEngineInternal;
+using UnityEngine.Events;
 
 public class CubeMovement : MonoBehaviour
 {
@@ -14,46 +13,76 @@ public class CubeMovement : MonoBehaviour
 
     [Range(0.001f, 5f)]
     [SerializeField]
-    private float _TickDuration;
+    public float _TickDuration;
+    private float _currentTickDuration;
+    private float _Ratio;
 
-    private TickSample _Sample;
+    [SerializeField] private LayerMask _groundMask;
 
     private Action DoAction;
-    public Action TickAction;
+    public UnityAction TickAction;
+
+    private bool wasOnConvoyor = false;
 
     private Quaternion _BaseRotation;
     private Vector3 _BasePos;
     private Vector3 _Pivot;
     private Vector3 _MovementDir;
-    private Vector3 _Direction;
+    public Vector3 _Direction;
     private Vector3 _ConvoyeurDir;
 
     private int _tickToWait = 0;
     private int _count;
 
+    private float _Timer;
+
+    public static int _tickToSpawn = 8;
+
+    public static List<CubeMovement> list = new List<CubeMovement>();
+
     private Vector3 _TeleportPos;
 
     void Start()
     {
-        _Direction = Vector3.forward;
-        _Sample = CubeManager.GetInstance().CreateCoroutine(_TickDuration, this);
-        SetModeMove();
+        SetModeSpawn();
+        list.Add(this);
+        GetComponent<Renderer>().material.color = Color.red;
+
+    }
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.layer != gameObject.layer) return;
+        if (other.gameObject.GetComponent<BoxCollider>().isTrigger && GetComponent<BoxCollider>().isTrigger)
+        {
+            GetComponent<Renderer>().material.color = Color.yellow;
+            other.gameObject.GetComponent<Renderer>().material.color = Color.yellow;
+            GameManager.GetInstance().GameOver();
+        }
     }
 
     void Update()
     {
         if (DoAction != null) DoAction();
 
+        if (_Timer >= _currentTickDuration)
+        {
+            TickAction();
+            _Timer = 0;
+        }
+        _Timer += Time.deltaTime * GameManager.gameSpeed ;
+        _Ratio = _Timer / _currentTickDuration;
+
     }
 
-    private void CheckWall() 
+    private void SetPivotAndRot()
     {
-        Ray lRay = new Ray(transform.position, _Direction);
+        _Pivot = transform.position + new Vector3(_Direction.x, -1f, _Direction.z) / 2f;
+        _BaseRotation = transform.rotation;
+    }
 
-
-        if (Physics.Raycast(lRay, 1f)) SetModeHitWall();
-
-        while (Physics.Raycast(transform.position, _Direction, 1f))
+    private void CheckWall()
+    {
+        while (Physics.Raycast(transform.position, _Direction, 1f, _groundMask))
         {
             _Direction = Quaternion.AngleAxis(90, Vector3.up) * _Direction;
             SetModeHitWall();
@@ -62,25 +91,30 @@ public class CubeMovement : MonoBehaviour
 
     #region Tile Stuff
 
-    private void CheckTile() 
+    private bool CheckTile()
     {
         Ray lRay = new Ray(transform.position, Vector3.down);
 
-        if (Physics.Raycast(lRay, out RaycastHit hitInfo,1f, _PlateLayer)) 
+        if (Physics.Raycast(lRay, out RaycastHit hitInfo, 1.1f, _PlateLayer))
         {
             string tile = hitInfo.collider.tag.ToString();
 
-            switch (tile) 
+            switch (tile)
             {
+                case "Target":
+                    GameManager.GetInstance().CubeValid();
+                    Destroy(gameObject);
+                    break;
                 case "Arrow":
                     _Direction = hitInfo.collider.transform.rotation * Vector3.forward;
                     break;
                 case "Convoyeur":
                     _ConvoyeurDir = hitInfo.collider.transform.rotation * Vector3.forward;
+                    wasOnConvoyor = true;
                     SetModeConvoyeur();
                     break;
                 case "Turn":
-                    _Direction = Quaternion.AngleAxis(90 * hitInfo.collider.gameObject.GetComponent<FractionneurPlate>().TurnSide,Vector3.up) * _Direction;
+                    _Direction = Quaternion.AngleAxis(90 * hitInfo.collider.gameObject.GetComponent<FractionneurPlate>().TurnSide, Vector3.up) * _Direction;
                     hitInfo.collider.gameObject.GetComponent<FractionneurPlate>().TurnSide *= -1;
                     break;
                 case "Stop":
@@ -92,157 +126,199 @@ public class CubeMovement : MonoBehaviour
                     break;
 
             }
+            return true;
         }
+        return false;
     }
 
     #endregion
 
     #region Tick Stuff
-    private void HitWallTick()
+
+    private void SpawnTick()
     {
-        if(_count >= _tickToWait)SetModeMove();
+        if (_count >= _tickToSpawn)
+        {
+            GetComponent<BoxCollider>().isTrigger = true;
+            SetModeMove();
+            GetComponent<Renderer>().material.color = Color.green;
+            SetPivotAndRot();
+        }
         _count++;
     }
 
-    private void MovementTick() 
+    private void MovementTick()
     {
-        CheckTile();
-        CheckWall();
-        _Pivot = transform.position + new Vector3(_Direction.x, -1f, _Direction.z) / 2f;
-        _BaseRotation = transform.rotation;
-        Ray lRay = new Ray(transform.position, Vector3.down);
+        if (wasOnConvoyor)
+        {
+            _Direction = _MovementDir;
+            wasOnConvoyor = false;
+        }
 
-        if (!Physics.Raycast(lRay, 1f)) SetModeFall();
+        if (!CheckTile()) CheckWall();
+        SetPivotAndRot();
+        Ray lRay = new Ray(transform.position, Vector3.down);
+        if (!Physics.Raycast(lRay, 1.1f, _groundMask)) SetModeFall();
     }
 
-    private void FallTick() 
+    private void FallTick()
     {
         CheckTile();
+
         _BasePos = transform.position;
         Ray lRay = new Ray(transform.position, Vector3.down);
-
-        if (Physics.Raycast(lRay, 1f)) SetModeMove();
+        if (Physics.Raycast(lRay, 1.1f, _groundMask))
+        {
+            _Pivot = transform.position + new Vector3(_Direction.x, -1f, _Direction.z) / 2f;
+            _BaseRotation = transform.rotation;
+            SetModeMove();
+        }
     }
 
-    private void ConvoyeurTick() 
+    private void ConvoyeurTick()
     {
-        _count++;
         if (_count >= _tickToWait)
         {
             _Direction = _MovementDir;
             SetModeMove();
         }
         MovementTick();
+        _count++;
     }
 
-    private void WaitTick() 
+    private void WaitTick()
     {
-        if (_count >= _tickToWait) 
+        if (_count >= _tickToWait)
+        {
+            MovementTick();
+            SetModeMove();
+        }
+        _count++;
+    }
+
+    private void StopTick() 
+    {
+        if(_count >= _tickToWait)
         {
             SetModeMove();
+            CheckWall();
         }
         _count++;
     }
 
     private void TeleportTick()
     {
-        if (_count == 1) 
+        if (_count == 1)
         {
             transform.position = _TeleportPos + Vector3.up * 1 * .5f;
         }
-        if (_count >= _tickToWait) SetModeMove();
+        if(_count == 2) 
+        {
+            CheckWall();
+            _Pivot = transform.position + new Vector3(_Direction.x, -1f, _Direction.z) / 2f;
+            _BaseRotation = transform.rotation;
+            Ray lRay = new Ray(transform.position, Vector3.down);
+            if (!Physics.Raycast(lRay, 1.1f, _groundMask))
+            {
+                SetModeFall();
+            }
+            DoAction = DoActionMove;
+        }
+        if (_count >= _tickToWait)
+        {
+            MovementTick();
+            SetModeMove();
+        }
         _count++;
     }
     #endregion
 
     #region State Machine
 
-    private void SetModeVoid() 
+    private void SetModeVoid()
     {
         DoAction = DoActionVoid;
     }
 
-    private void DoActionVoid() 
+    private void DoActionVoid() { }
+
+    private void SetModeSpawn()
     {
-        
+        _currentTickDuration = _TickDuration;
+        TickAction = SpawnTick;
+        _count = 0;
+
+        DoAction = DoActionSpawn;
     }
 
-    private void SetModeMove() 
+    private void DoActionSpawn() { }
+
+    private void SetModeMove()
     {
-        MovementTick();
+        _currentTickDuration = _TickDuration;
         DoAction = DoActionMove;
         TickAction = MovementTick;
     }
 
-    private void DoActionMove() 
-    {;
-        transform.position = _Pivot + Vector3.Slerp(new Vector3(-_Direction.x, 1f, -_Direction.z) / 2f, new Vector3(_Direction.x, 1f, _Direction.z) / 2f, _Sample._Ratio);
-        transform.rotation = Quaternion.Lerp(_BaseRotation, Quaternion.AngleAxis(-90, Vector3.Cross(_Direction, Vector3.up)) * _BaseRotation, _Sample._Ratio);
+    private void DoActionMove()
+    {
+        transform.position = _Pivot + Vector3.Slerp(new Vector3(-_Direction.x, 1f, -_Direction.z) / 2f, new Vector3(_Direction.x, 1f, _Direction.z) / 2f, Mathf.Clamp(_Ratio, 0, 1));
+        transform.rotation = Quaternion.Lerp(_BaseRotation, Quaternion.AngleAxis(-90, Vector3.Cross(_Direction, Vector3.up)) * _BaseRotation, Mathf.Clamp(_Ratio, 0, 1));
     }
 
-    private void SetModeFall() 
+    private void SetModeFall()
     {
         FallTick();
+        _currentTickDuration = _TickDuration / 2f;
         DoAction = DoActionFall;
         TickAction = FallTick;
     }
 
-    private void DoActionFall() 
+    private void DoActionFall()
     {
-        transform.position = _BasePos + Vector3.Lerp(Vector3.zero,Vector3.down, _Sample._Ratio);
+        transform.position = _BasePos + Vector3.Lerp(Vector3.zero, Vector3.down, Mathf.Clamp(_Ratio, 0, 1));
     }
 
-    private void SetModeHitWall() 
+    private void SetModeHitWall()
     {
         _tickToWait = 1;
         _count = 0;
-        DoAction = DoActionHitWall;
-        TickAction = HitWallTick;
+        DoAction = DoActionVoid;
+        TickAction = WaitTick;
     }
 
-    private void DoActionHitWall() 
-    {
-        
-    }
-
-    private void SetModeConvoyeur() 
+    private void SetModeConvoyeur()
     {
         _MovementDir = _Direction;
         _Direction = _ConvoyeurDir;
 
         DoAction = DoActionMove;
-        TickAction = ConvoyeurTick;
-        _tickToWait = 1;
-        _count = 0;
     }
 
-    private void SetModeStop() 
+    private void SetModeStop()
     {
-        DoAction = DoActionStop;
-        TickAction = WaitTick;
+        DoAction = DoActionVoid;
+        TickAction = StopTick;
 
         _count = 0;
         _tickToWait = 1;
-    }
-
-    private void DoActionStop() 
-    {
-        
     }
 
     private void SetModeTeleport()
     {
-        DoAction = DoActionTeleport;
+        if (TickAction == ConvoyeurTick) _Direction = _MovementDir;
+        DoAction = DoActionVoid;
         TickAction = TeleportTick;
-        
-        _count = 0;
-        _tickToWait = 2;
-    }
 
-    private void DoActionTeleport()
-    {
-        
+        _count = 0;
+        _tickToWait = 3;
     }
 
     #endregion
+
+    private void OnDestroy()
+    {
+        list.Remove(this);
+    }
+
 }

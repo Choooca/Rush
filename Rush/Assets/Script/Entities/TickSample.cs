@@ -2,18 +2,22 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class TickSample : MonoBehaviour
 {
     private float _Time;
-    private float _ElapseTime = 0;
+    public float _ElapseTime = 0;
+    public float _HalfElapseTime = 0;
+
     public float _Ratio { get; private set; }
 
-    public List<CubeMovement> CubeTickList = new List<CubeMovement>();
+    public UnityEvent TickEvent = new UnityEvent();
+
 
     public void Init(float pTime) 
     {
-        _Time = pTime;
+        _Time = pTime / 2f;
     }
 
     private void Start()
@@ -22,19 +26,13 @@ public class TickSample : MonoBehaviour
 
     private void Update()
     {
-        if (_ElapseTime >= _Time)
+        if (_HalfElapseTime >= _Time)
         {
-            foreach (CubeMovement lCubeTick in CubeTickList)
-            {
-                if (lCubeTick.TickAction.Method != null)
-                {
-                    lCubeTick.TickAction();
-                }
-            }
-            _ElapseTime -= _Time;
-        }    
+            _HalfElapseTime -= _Time;
+            TickEvent.Invoke();
+        }
+        _HalfElapseTime+= Time.deltaTime;
         _ElapseTime += Time.deltaTime;
-        _Ratio = _ElapseTime / _Time;
     }
    
 
