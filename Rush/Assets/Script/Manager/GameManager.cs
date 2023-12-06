@@ -10,7 +10,13 @@ public class GameManager : MonoBehaviour
 
     public static bool isPlaying = false;
 
+    public static bool isFinish;
+
     public static float gameSpeed = 1.0f;
+
+    [SerializeField] public Color[] colorType;
+
+    [SerializeField] private OrbitalCamera _cam;
 
     public static GameManager GetInstance() 
     {
@@ -33,6 +39,7 @@ public class GameManager : MonoBehaviour
             ResetCube();
             ResetSpawner();
             InitLevel();
+            foreach (FractionneurPlate tile in FractionneurPlate.list) tile.TurnSide = 1;
         }
     }
 
@@ -46,13 +53,18 @@ public class GameManager : MonoBehaviour
     {
         GameHud.GetInstance().ShowLoseScreen();
         GameHud.isPause = true;
+        isFinish = true;
         Time.timeScale = 0.0f;
     }
 
     public void CubeValid() 
     {
         _CubeToValid -= 1;
-        if (_CubeToValid == 0) GameHud.GetInstance().ShowWinScreen();
+        if (_CubeToValid == 0)
+        {
+            GameHud.GetInstance().ShowWinScreen();
+            isFinish = true;
+        }
     }
 
     private void ResetCube() 
@@ -75,6 +87,7 @@ public class GameManager : MonoBehaviour
     {
         _CubeToValid = 0;
         isPlaying = false;
+        isFinish = false;
         ResetCube();
         ResetTiles();
         ResetSpawner();
@@ -90,6 +103,10 @@ public class GameManager : MonoBehaviour
 
     public void NextLevel() 
     {
+        _cam.ResetCam();
+        _cam.StopCam();
+        VFXManager.GetInstance().ShowGame();
+        isFinish = false;
         Time.timeScale = 1;
         _CubeToValid = 0;
         gameSpeed = 1.0f;

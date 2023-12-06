@@ -10,11 +10,14 @@ public class GameHud : MonoBehaviour
 
     [SerializeField] private GameObject TileButtonContainer;
     [SerializeField] private GameObject tileButtonPrefab;
+    [SerializeField] private GameObject objectToHideWhenPlay;
 
     [SerializeField] private GameObject PauseMenu;
     [SerializeField] private GameObject WinScreen;
     [SerializeField] private GameObject LoseScreen;
     public static bool isPause = false;
+
+    [SerializeField] private OrbitalCamera _cam;
 
     private Sprite _ArrowSprite;
     private Sprite _StopperSprite;
@@ -87,7 +90,10 @@ public class GameHud : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        float alphaValue = GameManager.isPlaying ? 0 : 1;
+        objectToHideWhenPlay.gameObject.GetComponent<CanvasGroup>().alpha = alphaValue;
+
+        if (Input.GetKeyDown(KeyCode.Escape) && !GameManager.isFinish)
         {
             PauseMenu.SetActive(!PauseMenu.activeInHierarchy);
             isPause = !isPause;
@@ -111,6 +117,8 @@ public class GameHud : MonoBehaviour
         GameFlowManager.GetInstance().SetModeTitleCard();
         LvlManager.GetInstance().UnloadLevel();
         GameManager.GetInstance().ClearGame();
+        _cam.StopCam();
+        GameManager.isFinish = false;
     }
 
     public void ResetHud() 
@@ -119,6 +127,7 @@ public class GameHud : MonoBehaviour
         isPause = false;
         Time.timeScale = 1.0f;
         _SpeedSlider.value = 0.0f;
+        GameManager.isFinish = false;
         PauseMenu.SetActive(false);
         WinScreen.SetActive(false);
         LoseScreen.SetActive(false);

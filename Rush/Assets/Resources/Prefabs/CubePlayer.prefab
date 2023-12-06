@@ -274,7 +274,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d8ba3e3f299be99418c992c752e5c7b1, type: 2}
+  - {fileID: 2100000, guid: 0a1027f8f1a89c14688750bbc6a61e00, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -316,6 +316,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   _Direction: {x: 0, y: 0, z: 0}
+  cubeType: 0
 --- !u!33 &7184900242571817572
 MeshFilter:
   m_ObjectHideFlags: 0

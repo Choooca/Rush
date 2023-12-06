@@ -69,10 +69,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _side: 2
   nSpawnTick: 0
-  _tickBeforeSpawn: 0
+  TICK_BEFORE_SPAWN: 0
   _TickDuration: 0
   N_CUBE: 0
-  _cubePrefab: {fileID: 8447283517393941016, guid: ae4d1bdf69d161b4aa190e4946b65a64, type: 3}
+  _cubePrefab: {fileID: 5226842713720829154, guid: 879a1ee7a2c149f4687ed5932d9f0fbd, type: 3}
+  cubeType: 0
 --- !u!1 &1451354327250352
 GameObject:
   m_ObjectHideFlags: 0

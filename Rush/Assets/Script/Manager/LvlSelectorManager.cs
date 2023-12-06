@@ -16,6 +16,8 @@ public class LvlSelectorManager : MonoBehaviour
     [SerializeField] private float _levelSpeed = 5;
     [SerializeField] private float _Distance = 900 ;
 
+    [SerializeField] private OrbitalCamera _orbitalCamera;
+
     private void Start()
     {
         for (int i = 0; i < levelPrefabs.Count; i++)
@@ -68,6 +70,8 @@ public class LvlSelectorManager : MonoBehaviour
 
     public void Play() 
     {
+        VFXManager.GetInstance().ShowGame();
+        _orbitalCamera.ResetCam();
         GameFlowManager.GetInstance().SetModeGame(levelPrefabs[currentLvl]);
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Spawner : MonoBehaviour
 {
@@ -32,9 +33,13 @@ public class Spawner : MonoBehaviour
 
     private void OnDisable() => list.Remove(this);
 
+    [SerializeField] private int cubeType = 0;
+
     void Start()
     {
         nSpawnTick += CubeMovement._tickToSpawn;
+
+        GetComponentInChildren<MeshRenderer>().material.color = GameManager.GetInstance().colorType[cubeType % GameManager.GetInstance().colorType.Length];
 
         switch (_side)
         {
@@ -53,6 +58,8 @@ public class Spawner : MonoBehaviour
             default:
                 break;
         }
+
+        
     }
 
     private void SpawnCube()
@@ -67,6 +74,7 @@ public class Spawner : MonoBehaviour
             CubeMovement lCube = Instantiate(_cubePrefab, transform.position + Vector3.up * .5f, Quaternion.identity).GetComponent<CubeMovement>();
             lCube._Direction = Quaternion.AngleAxis(_Angle, Vector3.up) * Vector3.forward;
             lCube._TickDuration = _TickDuration;
+            lCube.cubeType = cubeType;
             _cubeSpawned++;
             _tickCount = nSpawnTick;
         }

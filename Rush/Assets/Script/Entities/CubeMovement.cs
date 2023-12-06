@@ -34,6 +34,8 @@ public class CubeMovement : MonoBehaviour
     private int _tickToWait = 0;
     private int _count;
 
+    [SerializeField] private LayerMask planeLayer;
+
     private float _Timer;
 
     public static int _tickToSpawn = 8;
@@ -42,20 +44,22 @@ public class CubeMovement : MonoBehaviour
 
     private Vector3 _TeleportPos;
 
+    [HideInInspector] public int cubeType;
+
     void Start()
     {
         SetModeSpawn();
         list.Add(this);
-        GetComponent<Renderer>().material.color = Color.red;
+        GetComponentInChildren<Renderer>().material.color = GameManager.GetInstance().colorType[cubeType % GameManager.GetInstance().colorType.Length];
+        
 
     }
     private void OnTriggerEnter(Collider other)
     {
+        if (other.gameObject.layer == 10) GameManager.GetInstance().GameOver();
         if (other.gameObject.layer != gameObject.layer) return;
         if (other.gameObject.GetComponent<BoxCollider>().isTrigger && GetComponent<BoxCollider>().isTrigger)
         {
-            GetComponent<Renderer>().material.color = Color.yellow;
-            other.gameObject.GetComponent<Renderer>().material.color = Color.yellow;
             GameManager.GetInstance().GameOver();
         }
     }
@@ -102,6 +106,7 @@ public class CubeMovement : MonoBehaviour
             switch (tile)
             {
                 case "Target":
+                    if ((hitInfo.collider.GetComponent<Target>()).cubeType != cubeType) break;
                     GameManager.GetInstance().CubeValid();
                     Destroy(gameObject);
                     break;
@@ -141,7 +146,6 @@ public class CubeMovement : MonoBehaviour
         {
             GetComponent<BoxCollider>().isTrigger = true;
             SetModeMove();
-            GetComponent<Renderer>().material.color = Color.green;
             SetPivotAndRot();
         }
         _count++;
