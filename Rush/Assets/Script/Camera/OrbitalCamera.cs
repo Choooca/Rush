@@ -40,7 +40,7 @@ public class OrbitalCamera : MonoBehaviour
         if (!canMove) return;
         horizontalAngle += moveSpeed * Input.GetAxis("Horizontal") * Time.deltaTime;
         verticalAngle += moveSpeed * Input.GetAxis("Vertical") * Time.deltaTime;
-        verticalAngle = Mathf.Clamp(verticalAngle, -45, 45);
+        verticalAngle = Mathf.Clamp(verticalAngle, -80, 80);
 
         Distance -= Input.GetAxis("Mouse ScrollWheel") * zoomSpeed * Time.deltaTime;
         Distance = Mathf.Clamp(Distance , maxZoom, minZoom);

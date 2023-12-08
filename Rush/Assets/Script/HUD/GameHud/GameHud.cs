@@ -133,6 +133,16 @@ public class GameHud : MonoBehaviour
         LoseScreen.SetActive(false);
     }
 
+    public void ResetLose() 
+    {
+        isPause = false;
+        Time.timeScale = 1.0f;
+        GameManager.isFinish = false;
+        PauseMenu.SetActive(false);
+        WinScreen.SetActive(false);
+        LoseScreen.SetActive(false);
+    }
+
     public void ResetTiles() 
     {
         if (GameManager.isPlaying) return;

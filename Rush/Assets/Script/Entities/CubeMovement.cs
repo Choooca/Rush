@@ -19,6 +19,9 @@ public class CubeMovement : MonoBehaviour
 
     [SerializeField] private LayerMask _groundMask;
 
+    private Animator _Animator;
+    [SerializeField] private GameObject _CubeGraphics;
+
     private Action DoAction;
     public UnityAction TickAction;
 
@@ -51,6 +54,7 @@ public class CubeMovement : MonoBehaviour
         SetModeSpawn();
         list.Add(this);
         GetComponentInChildren<Renderer>().material.color = GameManager.GetInstance().colorType[cubeType % GameManager.GetInstance().colorType.Length];
+        _Animator = GetComponentInChildren<Animator>();
         
 
     }
@@ -73,6 +77,7 @@ public class CubeMovement : MonoBehaviour
             TickAction();
             _Timer = 0;
         }
+        _Animator.speed = GameManager.gameSpeed;
         _Timer += Time.deltaTime * GameManager.gameSpeed ;
         _Ratio = _Timer / _currentTickDuration;
 
@@ -121,6 +126,7 @@ public class CubeMovement : MonoBehaviour
                 case "Turn":
                     _Direction = Quaternion.AngleAxis(90 * hitInfo.collider.gameObject.GetComponent<FractionneurPlate>().TurnSide, Vector3.up) * _Direction;
                     hitInfo.collider.gameObject.GetComponent<FractionneurPlate>().TurnSide *= -1;
+                    CheckWall();
                     break;
                 case "Stop":
                     SetModeStop();
@@ -175,18 +181,24 @@ public class CubeMovement : MonoBehaviour
         {
             _Pivot = transform.position + new Vector3(_Direction.x, -1f, _Direction.z) / 2f;
             _BaseRotation = transform.rotation;
-            SetModeMove();
+            if(TickAction == FallTick)SetModeMove();
+            CheckWall();
         }
     }
 
     private void ConvoyeurTick()
     {
-        if (_count >= _tickToWait)
+        if (_count == 0)
         {
-            _Direction = _MovementDir;
-            SetModeMove();
+            if (!CheckTile()) CheckWall();
+            DoAction = DoActionVoid;
+            MovementTick();
         }
-        MovementTick();
+        if (_count == 1)
+        {
+            SetModeMove();
+            MovementTick();
+        }
         _count++;
     }
 
@@ -285,6 +297,7 @@ public class CubeMovement : MonoBehaviour
 
     private void SetModeHitWall()
     {
+        _Animator.SetTrigger("HitWall");
         _tickToWait = 1;
         _count = 0;
         DoAction = DoActionVoid;
@@ -296,7 +309,11 @@ public class CubeMovement : MonoBehaviour
         _MovementDir = _Direction;
         _Direction = _ConvoyeurDir;
 
+        TickAction = ConvoyeurTick;
         DoAction = DoActionMove;
+
+        _tickToWait = 1;
+        _count = 0;
     }
 
     private void SetModeStop()

@@ -7,8 +7,9 @@ public class Bubble : MonoBehaviour
     [SerializeField] private float speed;
 
     public List<Color> colors = new List<Color>() {Color.red, Color.blue };
-    private float count;
-    private float lifeTime = 20;
+    private float count = 0;
+
+    private float lifeTime = 50;
 
     private void Start()
     {

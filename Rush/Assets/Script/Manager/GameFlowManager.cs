@@ -45,7 +45,6 @@ public class GameFlowManager : MonoBehaviour
         currentMode = Mode.Game;
         HudManager.GetInstance().ShowGame();
         TileScriptableObject lvlSetting = LvlManager.GetInstance().LoadLvl(pLevelToLoad).tileSettings;
-
         for (int i = 0; i < lvlSetting.nTileList.Count; i++)
         {
             GameHud.GetInstance().AddButton(lvlSetting.nTileList[i], lvlSetting.sideList[i], lvlSetting.tileList[i]);

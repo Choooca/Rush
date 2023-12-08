@@ -119,6 +119,15 @@ public class GameManager : MonoBehaviour
         GameFlowManager.GetInstance().SetModeGame(LvlManager.GetInstance().levels[LvlManager.GetInstance().levels.IndexOf(LvlManager.currentLvl) + 1]);
     }
 
+    public void ResetLose() 
+    {
+        GameHud.GetInstance().ResetLose();
+        ResetCube();
+        ResetSpawner();
+        InitLevel();
+        foreach (FractionneurPlate tile in FractionneurPlate.list) tile.TurnSide = 1;
+    }
+
     private void OnDestroy()
     {
         if(_Instance == this) _Instance = null;

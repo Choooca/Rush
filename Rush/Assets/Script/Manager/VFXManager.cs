@@ -8,7 +8,7 @@ public class VFXManager : MonoBehaviour
 
     [SerializeField] private Animator DissolveAnimator;
     [SerializeField] private GameObject Dissolve;
-    public float test;
+    [SerializeField] private GameObject DestroyParticle;
 
     [SerializeField] private float timeToShow;
     private float count = 0;
@@ -37,6 +37,12 @@ public class VFXManager : MonoBehaviour
     {
         Dissolve.GetComponent<Renderer>().material.SetFloat("_DissolveStep", 0);
         DissolveAnimator.SetTrigger("Dissolve");
+    }
+
+    public void SpawnDestroyParticle(Vector3 pos, Color color) 
+    {
+        GameObject lObject = Instantiate(DestroyParticle, pos, Quaternion.identity);
+        lObject.GetComponent<Renderer>().material.SetColor("_Color", color);
     }
 
     private void OnDestroy()
